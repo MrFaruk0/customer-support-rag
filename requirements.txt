@@ -1,7 +1,9 @@
 streamlit
 langchain
-faiss-cpu
 sentence-transformers
-pdfplumber
-torch
+faiss-cpu
 transformers
+torch
+pdfplumber
+openai
+python-dotenv
