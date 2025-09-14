@@ -4,27 +4,27 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-st.title("PDF Soru-Cevap Uygulaması")
+st.title("PDF Q&A Application")
 
-pdf_files = st.file_uploader("PDF dosyaları yükle (birden fazla)", type="pdf", accept_multiple_files=True)
+pdf_files = st.file_uploader("Upload PDF files (multiple)", type="pdf", accept_multiple_files=True)
 
 if pdf_files:
     try:
-        st.success(f"{len(pdf_files)} PDF yüklendi!")
+        st.success(f"{len(pdf_files)} PDF files uploaded!")
         qa = build_rag(pdf_files)
     except Exception as exc:
-        st.error(f"RAG kurulurken hata oluştu: {exc}")
+        st.error(f"RAG build error: {exc}")
         st.stop()
 
-    user_input = st.text_input("Sorunuzu yazın (TR/EN):")
+    user_input = st.text_input("Ask your question (TR/EN):")
     lang_choice = st.selectbox(
-        "Yanıt dili",
-        options=["Auto", "Türkçe", "English"],
+        "Response language",
+        options=["Auto", "Turkish", "English"],
         index=0
     )
     if user_input:
         if len(user_input) > 400:
-            st.warning("Soru çok uzun. Lütfen daha kısa ve net bir soru yazın.")
+            st.warning("Question is too long. Please write a shorter and more concise question.")
         else:
             try:
                 # Determine response language
@@ -40,7 +40,7 @@ if pdf_files:
                     return "tr"
 
                 target_lang = (
-                    "tr" if lang_choice == "Türkçe" else
+                    "tr" if lang_choice == "Turkish" else
                     "en" if lang_choice == "English" else
                     detect_lang(user_input)
                 )
@@ -54,21 +54,21 @@ if pdf_files:
                 result = qa(prefixed_query)
                 answer = (result.get("result") or "").strip()
                 if not answer:
-                    answer = "Bağlamı özetleyecek bir yanıt üretilemedi. Lütfen soruyu yeniden ifade edin."
-                st.markdown("**Cevap:**")
+                    answer = "No answer generated. Please rephrase the question."
+                st.markdown("**Answer:**")
                 st.write(answer)
 
                 src_docs = result.get("source_documents") or []
                 if src_docs:
-                    with st.expander("Kaynak parçalar"):
+                    with st.expander("Source chunks"):
                         for i, d in enumerate(src_docs, 1):
                             page = d.metadata.get("page") if hasattr(d, "metadata") else None
-                            title = f"Kaynak {i} (Sayfa {page})" if page else f"Kaynak {i}"
+                            title = f"Source {i} (Page {page})" if page else f"Source {i}"
                             st.markdown(title)
                             st.text(d.page_content[:1000])
                 else:
-                    st.caption("Herhangi bir kaynak döndürülmedi.")
+                    st.caption("No source documents returned.")
             except KeyError:
-                st.error("Zincirden beklenen anahtarlar bulunamadı. Lütfen tekrar deneyin.")
+                st.error("Expected keys not found in chain. Please try again.")
             except Exception as exc:
-                st.error(f"Sorgu çalıştırılırken hata: {exc}")
+                st.error(f"Query execution error: {exc}")
